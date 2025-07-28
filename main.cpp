@@ -9,6 +9,7 @@ class KeyValueStore {
 private:
     std::unordered_map<std::string, std::string> data;
 
+    
 public:
     // Set a key-value pair.
     void set(const std::string& key, const std::string& value) {
