@@ -42,12 +42,32 @@ public:
         file.close();
         return true;
     }
+
+    bool load(const std::string& filename){
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            return true; // this means file doesn't exist yet. 
+        }
+        std::string line;
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            std::string key, value;
+
+            // Split the line by the comma delimiter
+            if (std::getline(ss, key, ',') && std::getline(ss, value)) {
+                data[key] = value; // Directly set the data
+            }
+        }
+        file.close();
+        return true;
+    }
 };
 
 int main() {
     KeyValueStore kvs;
     std::string line;
     const std::string FILENAME = "data.csv";
+    kvs.load(FILENAME);
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
     std::cout << "Enter commands (e.g., SET key value, GET key, EXIT)" << std::endl;
