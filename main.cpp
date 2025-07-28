@@ -28,20 +28,27 @@ public:
         return data.erase(key) > 0;
     }
 
-    bool save(const std::string &filename){
-        std::ofstream file(filename);
-        if (!file.is_open()) {
-            return false; // Could not open the file
-        }
-
-        // Implementation of adding data in the file
-        for(auto const& it: data){
-            file << it.first << ","<<it.second<<"\n";
-        }
-
-        file.close();
-        return true;
+    bool save(const std::string& filename) const {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "ERROR: Could not open file for writing: " << filename << std::endl;
+        return false;
     }
+
+    for (const auto& pair : data) {
+        // Check if the value contains a comma
+        if (pair.second.find(',') != std::string::npos) {
+            // If it does, enclose the value in double quotes
+            file << pair.first << ",\"" << pair.second << "\"\n";
+        } else {
+            // Otherwise, write it normally
+            file << pair.first << "," << pair.second << "\n";
+        }
+    }
+
+    file.close();
+    return true;
+}
 
     bool load(const std::string& filename){
         std::ifstream file(filename);
