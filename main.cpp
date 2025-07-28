@@ -61,6 +61,11 @@ public:
         file.close();
         return true;
     }
+
+    size_t count() const {
+        return data.size();
+    }
+
 };
 
 int main() {
@@ -106,6 +111,9 @@ int main() {
             } else {
                 std::cout << "ERROR: Incorrect usage. Try GET key" << std::endl;
             }
+        }
+        else if (command == "COUNT") {
+            std::cout << kvs.count() << std::endl;
         }
         else if (command == "REMOVE") {
             std::string key;
