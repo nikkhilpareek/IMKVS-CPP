@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <sstream>
 #include <optional>
 
 class KeyValueStore {
@@ -29,27 +30,60 @@ public:
 
 int main() {
     KeyValueStore kvs;
+    std::string line;
 
-    kvs.set("home", "ganganagar");
-    kvs.set("college", "jaipur");
-    std::cout << "Set 'home' and 'college'." << std::endl;
+    std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
+    std::cout << "Enter commands (e.g., SET key value, GET key, EXIT)" << std::endl;
+    while(true){
+        std::cout << "> ";
+        if (!std::getline(std::cin, line)) {
+            break; // Exit if input stream closes (e.g., Ctrl+D)
+        }
 
-    // Test getting a value that exists
-    if (auto value = kvs.get("college")) {
-        std::cout << "GET 'college': Found value -> " << *value << std::endl;
+        std::stringstream ss(line);
+        std::string command;
+        ss >> command; // this will parse the first command in the input
+
+        if (command == "EXIT") {
+            break;
+        }
+        else if (command == "SET") {
+            std::string key, value;
+            // now we try to extract a key and a value.
+            if (ss >> key && ss >> value) {
+                kvs.set(key, value);
+                std::cout << "OK" << std::endl;
+            } else {
+                std::cout << "ERROR: Incorrect usage. Try SET key value" << std::endl;
+            }
+        } else if(command == "GET"){
+            std::string key;
+            if (ss >> key) {
+                if (auto value = kvs.get(key)) {
+                    std::cout << *value << std::endl;
+                } else {
+                    std::cout << "(nil)" << std::endl; // (nil) is a common way to show 'not found'
+                }
+            } else {
+                std::cout << "ERROR: Incorrect usage. Try GET key" << std::endl;
+            }
+        }
+        else if (command == "REMOVE") {
+            std::string key;
+            if (ss >> key) {
+                if (kvs.remove(key)) {
+                    std::cout << "OK" << std::endl;
+                } else {
+                    std::cout << "Key not found" << std::endl;
+                }
+            } else {
+                std::cout << "ERROR: Incorrect usage. Try REMOVE key" << std::endl;
+            }
+        } else if (!command.empty()) {
+            std::cout << "ERROR: Unknown command '" << command << "'" << std::endl;
+        }
+
     }
-
-    // Test removing a value
-    if (kvs.remove("college")) {
-        std::cout << "REMOVE 'college': Success." << std::endl;
-    }
-
-    // Test getting a value that has been removed
-    if (auto value = kvs.get("college")) {
-        std::cout << "GET 'college': Found value -> " << *value << std::endl;
-    } else {
-        std::cout << "GET 'college': Value not found." << std::endl;
-    }
-
+    std::cout<<"EXITING.."<<std::endl;
     return 0;
 }
