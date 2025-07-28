@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <optional>
+#include <fstream>
 
 class KeyValueStore {
 private:
@@ -26,11 +27,27 @@ public:
     bool remove(const std::string& key) {
         return data.erase(key) > 0;
     }
+
+    bool save(const std::string &filename){
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            return false; // Could not open the file
+        }
+
+        // Implementation of adding data in the file
+        for(auto const& it: data){
+            file << it.first << ","<<it.second<<"\n";
+        }
+
+        file.close();
+        return true;
+    }
 };
 
 int main() {
     KeyValueStore kvs;
     std::string line;
+    const std::string FILENAME = "data.csv";
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
     std::cout << "Enter commands (e.g., SET key value, GET key, EXIT)" << std::endl;
@@ -45,6 +62,8 @@ int main() {
         ss >> command; // this will parse the first command in the input
 
         if (command == "EXIT") {
+            kvs.save(FILENAME);
+            std::cout << "Data saved in data.csv" << std::endl;
             break;
         }
         else if (command == "SET") {
