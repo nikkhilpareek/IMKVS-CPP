@@ -50,24 +50,38 @@ public:
     return true;
 }
 
-    bool load(const std::string& filename){
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            return true; // this means file doesn't exist yet. 
-        }
-        std::string line;
-        while (std::getline(file, line)) {
-            std::stringstream ss(line);
-            std::string key, value;
-
-            // Split the line by the comma delimiter
-            if (std::getline(ss, key, ',') && std::getline(ss, value)) {
-                data[key] = value; // Directly set the data
-            }
-        }
-        file.close();
+    bool load(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
         return true;
     }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::string key, value;
+        size_t comma_pos = line.find(',');
+        if (comma_pos == std::string::npos) {
+            continue; // Skip malformed lines
+        }
+
+        key = line.substr(0, comma_pos);
+        std::string value_part = line.substr(comma_pos + 1);
+
+        // Check if the value part is quoted
+        if (!value_part.empty() && value_part.front() == '"' && value_part.back() == '"') {
+            // If so, strip the quotes
+            value = value_part.substr(1, value_part.length() - 2);
+        } else {
+            value = value_part;
+        }
+        
+        data[key] = value;
+    }
+    file.close();
+    return true;
+}
 
     size_t count() const {
         return data.size();
