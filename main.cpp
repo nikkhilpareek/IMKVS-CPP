@@ -35,14 +35,27 @@ int main() {
             kvs.rollback();
         }
         else if (command == "SET") {
-            std::string key, value;
-            if (ss >> key && ss >> value) {
+            std::string key;
+            if (ss >> key) {
+            std::string value;
+            std::getline(ss, value);
+
+            if (!value.empty()) {
+                size_t first_char = value.find_first_not_of(" \t");
+                if (std::string::npos != first_char) {
+                    value = value.substr(first_char);
+                }
+            }
+            if (value.empty()) {
+                std::cout << "ERROR: Value cannot be empty for SET command." << std::endl;
+            } else {
                 kvs.set(key, value);
                 std::cout << "OK" << std::endl;
-            } else {
-                std::cout << "ERROR: Incorrect usage. Try SET key value" << std::endl;
             }
-        } else if(command == "GET"){
+            } else {
+            std::cout << "ERROR: Incorrect usage. Try SET key value" << std::endl;
+            }
+        }else if(command == "GET"){
             std::string key;
             if (ss >> key) {
                 if (auto value = kvs.get(key)) {
