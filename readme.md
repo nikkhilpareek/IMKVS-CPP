@@ -90,4 +90,27 @@ The following commands are available in the CLI:
 
 ---
 
+#### To be Added in Future
 
+##### Core Feature Enhancements
+- Key Expiration (TTL): Allow keys to have a "time-to-live" so they automatically delete after a set duration.
+
+- More Data Types: Add support for integers to enable atomic commands like INCR and DECR.
+
+- Namespaces: Allow for multiple, isolated databases within a single running instance, accessible via a SELECT command.
+
+- REST API: Expose the key-value store over HTTP, allowing other applications to interact with it via a web API.
+
+##### Robustness & Performance
+- Advanced Error Handling: Make the JSON loading more robust to handle corrupted or malformed data files without crashing.
+
+- Thread Safety: Add mutexes to the data structures to allow for safe concurrent access from multiple threads.
+
+- Performance Benchmarking: Create a test suite to measure the performance of SET and GET operations and compare them to other in-memory stores.
+
+##### Developer Experience & Tooling
+- Unit Testing: Integrate a testing framework like Google Test or Catch2 to create automated tests for the KeyValueStore class.
+
+- CMake Build System: Replace the manual g++ command with a CMakeLists.txt file for a standard, cross-platform build system.
+
+- Continuous Integration (CI): Set up a GitHub Actions workflow to automatically build the project and run tests every time you push new code.
