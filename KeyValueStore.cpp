@@ -3,11 +3,59 @@
 #include <sstream>
 #include <iostream>
 
+void KeyValueStore::begin(){
+    if (in_trxn) {
+        std::cout << "ERROR: Transaction already in progress." << std::endl;
+        return;
+    }
+    in_trxn = true;
+    trxn_data.clear();
+    std::cout << "OK" << std::endl;
+}
+
+
+void KeyValueStore::commit() {
+    if (!in_trxn) {
+        std::cout << "ERROR: No transaction to commit." << std::endl;
+        return;
+    }
+    // Apply changes from transaction_data to the main data map
+    for (const auto& pair : trxn_data) {
+        if (pair.second.has_value()) {
+            data[pair.first] = *pair.second;
+        } else {
+            data.erase(pair.first);
+        }
+    }
+    in_trxn = false;
+    trxn_data.clear();
+    std::cout << "OK" << std::endl;
+}
+
+void KeyValueStore::rollback() {
+    if (!in_trxn) {
+        std::cout << "ERROR: No transaction to rollback." << std::endl;
+        return;
+    }
+    in_trxn = false;
+    trxn_data.clear();
+    std::cout << "OK" << std::endl;
+}
+
 void KeyValueStore::set(const std::string& key, const std::string& value) {
-    data[key] = value;
+    if (in_trxn) {
+        trxn_data[key] = value;
+    } else {
+        data[key] = value;
+    }
 }
 
 std::optional<std::string> KeyValueStore::get(const std::string& key) const {
+    if (in_trxn) {
+        if (auto it = trxn_data.find(key); it != trxn_data.end()) {
+            return it->second; // Returns the value or nullopt if deleted
+        }
+    }
     if (auto it = data.find(key); it != data.end()) {
         return it->second;
     }
@@ -15,6 +63,10 @@ std::optional<std::string> KeyValueStore::get(const std::string& key) const {
 }
 
 bool KeyValueStore::remove(const std::string& key) {
+    if (in_trxn) {
+        trxn_data[key] = std::nullopt; // Mark for deletion
+        return true;
+    }
     return data.erase(key) > 0;
 }
 

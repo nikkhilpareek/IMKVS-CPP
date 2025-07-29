@@ -25,6 +25,15 @@ int main() {
             std::cout << "Data saved in data.csv" << std::endl;
             break;
         }
+        else if (command == "BEGIN") {
+            kvs.begin();
+        } 
+        else if (command == "COMMIT") {
+            kvs.commit();
+        } 
+        else if (command == "ROLLBACK") {
+            kvs.rollback();
+        }
         else if (command == "SET") {
             std::string key, value;
             if (ss >> key && ss >> value) {
