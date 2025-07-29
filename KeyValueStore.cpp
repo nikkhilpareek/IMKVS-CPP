@@ -2,6 +2,9 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 void KeyValueStore::begin(){
     if (in_trxn) {
@@ -80,13 +83,13 @@ bool KeyValueStore::save(const std::string& filename) const {
         std::cerr << "ERROR: Could not open file for writing: " << filename << std::endl;
         return false;
     }
-    for (const auto& pair : data) {
-        if (pair.second.find(',') != std::string::npos) {
-            file << pair.first << ",\"" << pair.second << "\"\n";
-        } else {
-            file << pair.first << "," << pair.second << "\n";
-        }
-    }
+
+    // Convert the entire map to a JSON object
+    json j = data;
+
+    // Write the JSON object to the file with pretty-printing (4-space indent)
+    file << j.dump(4);
+
     file.close();
     return true;
 }
@@ -94,23 +97,22 @@ bool KeyValueStore::save(const std::string& filename) const {
 bool KeyValueStore::load(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        return true;
+        return true; // File doesn't exist yet, which is fine.
     }
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty()) continue;
-        std::string key, value;
-        size_t comma_pos = line.find(',');
-        if (comma_pos == std::string::npos) continue;
-        key = line.substr(0, comma_pos);
-        std::string value_part = line.substr(comma_pos + 1);
-        if (!value_part.empty() && value_part.front() == '"' && value_part.back() == '"') {
-            value = value_part.substr(1, value_part.length() - 2);
-        } else {
-            value = value_part;
-        }
-        data[key] = value;
+
+    try {
+        // Parse the file directly into a JSON object
+        json j;
+        file >> j;
+
+        // Convert the JSON object back into the map
+        data = j.get<std::unordered_map<std::string, std::string>>();
+    } catch (const json::parse_error& e) {
+        std::cerr << "ERROR: Failed to parse JSON file: " << e.what() << std::endl;
+        // Decide if you want to exit or start with a clean slate
+        return false;
     }
+    
     file.close();
     return true;
 }

@@ -6,7 +6,7 @@
 int main() {
     KeyValueStore kvs;
     std::string line;
-    const std::string FILENAME = "data.csv";
+    const std::string FILENAME = "data.json";
     kvs.load(FILENAME);
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
@@ -22,7 +22,7 @@ int main() {
         ss >> command;
         if (command == "EXIT") {
             kvs.save(FILENAME);
-            std::cout << "Data saved in data.csv" << std::endl;
+            std::cout << "Data saved in data.json" << std::endl;
             break;
         }
         else if (command == "BEGIN") {

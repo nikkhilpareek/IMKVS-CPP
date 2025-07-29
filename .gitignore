@@ -7,3 +7,5 @@
 !*.md
 !*.csv
 !*.h
+!*.hpp
+!*.json
