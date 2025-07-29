@@ -1,5 +1,7 @@
 # In-Memory Key-Value Store
 
+<p align="center"><img src="https://socialify.git.ci/nikkhilpareek/IMKVS-CPP/image?custom_description=A+Simple+in-memory+Key-Value+Storage&amp;description=1&amp;language=1&amp;name=1&amp;owner=1&amp;stargazers=1&amp;theme=Auto" alt="project-image"></p>
+
 A simple, persistent, in-memory key-value store built with C++.  
 It features an interactive command-line interface (CLI) and supports basic database transactions.
 
