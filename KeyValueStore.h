@@ -6,6 +6,9 @@
 #include <optional>
 #include <chrono>
 
+#include "json.hpp"
+using json = nlohmann::json;
+
 struct ValueWithTTL {
     std::string value;
     long long expiration_time_ms;
@@ -21,6 +24,8 @@ struct ValueWithTTL {
     }
 };
 
+void to_json(json& j, const ValueWithTTL& v);
+void from_json(const json& j, ValueWithTTL& v);
 
 class KeyValueStore {
 private:

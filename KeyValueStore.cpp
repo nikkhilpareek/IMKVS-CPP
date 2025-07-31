@@ -7,6 +7,17 @@
 
 using json = nlohmann::json;
 
+void to_json(json& j, const ValueWithTTL& v) {
+    j = json{{"value", v.value}, {"expiration_time_ms", v.expiration_time_ms}};
+}
+
+void from_json(const json& j, ValueWithTTL& v) {
+    j.at("value").get_to(v.value);
+    j.at("expiration_time_ms").get_to(v.expiration_time_ms);
+}
+
+
+
 long long getCurrentTimeMillis() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()
@@ -101,11 +112,41 @@ size_t KeyValueStore::count() const {
 }
 
 bool KeyValueStore::save(const std::string& filename) const {
-    std::cout << "INFO: Saving to file is temporarily disabled pending JSON update." << std::endl;
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "ERROR: Could not open file for writing: " << filename << std::endl;
+        return false;
+    }
+
+    // Create a temporary map to hold only non-expired items
+    std::unordered_map<std::string, ValueWithTTL> non_expired_data;
+    for (const auto& pair : data) {
+        if (!pair.second.is_expired()) {
+            non_expired_data[pair.first] = pair.second;
+        }
+    }
+
+    json j = non_expired_data;
+    file << j.dump(4);
+    file.close();
     return true;
 }
 
 bool KeyValueStore::load(const std::string& filename) {
-     std::cout << "INFO: Loading from file is temporarily disabled." << std::endl;
-     return true;
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return true; // File doesn't exist yet, which is fine on first run.
+    }
+
+    try {
+        json j;
+        file >> j;
+        data = j.get<std::unordered_map<std::string, ValueWithTTL>>();
+    } catch (const json::parse_error& e) {
+        std::cerr << "ERROR: Failed to parse JSON file: " << e.what() << std::endl;
+        return false;
+    }
+    
+    file.close();
+    return true;
 }
