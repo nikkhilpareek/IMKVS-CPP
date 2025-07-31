@@ -4,17 +4,34 @@
 #include <string>
 #include <unordered_map>
 #include <optional>
+#include <chrono>
+
+struct ValueWithTTL {
+    std::string value;
+    long long expiration_time_ms;
+
+    bool is_expired() const {
+        if (expiration_time_ms == -1) {
+            return false;
+        }
+        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        ).count();
+        return now > expiration_time_ms;
+    }
+};
+
 
 class KeyValueStore {
 private:
-    std::unordered_map<std::string, std::string> data;
+    std::unordered_map<std::string, ValueWithTTL> data;
 
     bool in_trxn = false;
-    std::unordered_map<std::string, std::optional<std::string>> trxn_data;
+    std::unordered_map<std::string, std::optional<ValueWithTTL>> trxn_data;
 
 public:
-    void set(const std::string& key, const std::string& value);
-    std::optional<std::string> get(const std::string& key) const;
+    void set(const std::string& key, const std::string& value, long long ttl_ms = -1);
+    std::optional<std::string> get(const std::string& key);
     bool remove(const std::string& key);
     size_t count() const;
     bool save(const std::string& filename) const;

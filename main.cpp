@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "KeyValueStore.h" 
+#include <stdexcept>
+#include "KeyValueStore.h"
 
 int main() {
     KeyValueStore kvs;
@@ -10,7 +11,7 @@ int main() {
     kvs.load(FILENAME);
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
-    std::cout << "Enter commands (e.g., SET key value, GET key, EXIT)" << std::endl;
+    std::cout << "Enter commands (e.g., SET key value [ttl_ms], GET key, EXIT)" << std::endl;
     
     while(true){
         std::cout << "> ";
@@ -22,39 +23,55 @@ int main() {
         ss >> command;
         if (command == "EXIT") {
             kvs.save(FILENAME);
-            std::cout << "Data saved in data.json" << std::endl;
+            std::cout << "Data saving status reported above." << std::endl;
             break;
         }
         else if (command == "BEGIN") {
             kvs.begin();
-        } 
+        }
         else if (command == "COMMIT") {
             kvs.commit();
-        } 
+        }
         else if (command == "ROLLBACK") {
             kvs.rollback();
         }
         else if (command == "SET") {
             std::string key;
-            if (ss >> key) {
-            std::string value;
-            std::getline(ss, value);
+            if (!(ss >> key)) {
+                std::cout << "ERROR: Incorrect usage. Try SET key value [ttl_ms]" << std::endl;
+                continue;
+            }
 
-            if (!value.empty()) {
-                size_t first_char = value.find_first_not_of(" \t");
-                if (std::string::npos != first_char) {
-                    value = value.substr(first_char);
+            std::string rest_of_line;
+            std::getline(ss, rest_of_line);
+
+            size_t first_char = rest_of_line.find_first_not_of(" \t");
+            if (std::string::npos == first_char) {
+                std::cout << "ERROR: Value cannot be empty for SET command." << std::endl;
+                continue;
+            }
+            rest_of_line = rest_of_line.substr(first_char);
+
+            long long ttl_ms = -1;
+            std::string value = rest_of_line;
+
+            size_t last_space = rest_of_line.find_last_of(" \t");
+            if (last_space != std::string::npos) {
+                std::string last_word = rest_of_line.substr(last_space + 1);
+                try {
+                    size_t pos;
+                    long long potential_ttl = std::stoll(last_word, &pos);
+                    if (pos == last_word.length()) {
+                        ttl_ms = potential_ttl;
+                        value = rest_of_line.substr(0, last_space);
+                    }
+                } catch (const std::invalid_argument&) {
+                } catch (const std::out_of_range&) {
                 }
             }
-            if (value.empty()) {
-                std::cout << "ERROR: Value cannot be empty for SET command." << std::endl;
-            } else {
-                kvs.set(key, value);
-                std::cout << "OK" << std::endl;
-            }
-            } else {
-            std::cout << "ERROR: Incorrect usage. Try SET key value" << std::endl;
-            }
+
+            kvs.set(key, value, ttl_ms);
+            std::cout << "OK" << std::endl;
         }else if(command == "GET"){
             std::string key;
             if (ss >> key) {
