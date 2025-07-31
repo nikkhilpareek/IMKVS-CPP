@@ -8,10 +8,13 @@ int main() {
     KeyValueStore kvs;
     std::string line;
     const std::string FILENAME = "data.json";
+
+    // IMPORTANT: Delete the old data.json file before the first run!
+    // rm data.json
     kvs.load(FILENAME);
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
-    std::cout << "Enter commands (e.g., SET key value [ttl_ms], GET key, EXIT)" << std::endl;
+    std::cout << "Enter commands (e.g., SET, GET, INCR, DECR, EXIT)" << std::endl;
     
     while(true){
         std::cout << "> ";
@@ -23,7 +26,7 @@ int main() {
         ss >> command;
         if (command == "EXIT") {
             kvs.save(FILENAME);
-            std::cout << "Data saving status reported above." << std::endl;
+            std::cout << "Data saved to data.json" << std::endl;
             break;
         }
         else if (command == "BEGIN") {
@@ -69,7 +72,6 @@ int main() {
                 } catch (const std::out_of_range&) {
                 }
             }
-
             kvs.set(key, value, ttl_ms);
             std::cout << "OK" << std::endl;
         }else if(command == "GET"){
@@ -98,7 +100,34 @@ int main() {
             } else {
                 std::cout << "ERROR: Incorrect usage. Try REMOVE key" << std::endl;
             }
-        } else if (!command.empty()) {
+        }
+        // ++ START: ADD THIS NEW SECTION ++
+        else if (command == "INCR") {
+            std::string key;
+            if (ss >> key) {
+                if (auto new_value = kvs.incr(key)) {
+                    std::cout << "(integer) " << *new_value << std::endl;
+                } else {
+                    std::cout << "ERROR: Value is not an integer or out of range." << std::endl;
+                }
+            } else {
+                std::cout << "ERROR: Incorrect usage. Try INCR key" << std::endl;
+            }
+        }
+        else if (command == "DECR") {
+            std::string key;
+            if (ss >> key) {
+                if (auto new_value = kvs.decr(key)) {
+                    std::cout << "(integer) " << *new_value << std::endl;
+                } else {
+                    std::cout << "ERROR: Value is not an integer or out of range." << std::endl;
+                }
+            } else {
+                std::cout << "ERROR: Incorrect usage. Try DECR key" << std::endl;
+            }
+        }
+        // ++ END: ADD THIS NEW SECTION ++
+        else if (!command.empty()) {
             std::cout << "ERROR: Unknown command '" << command << "'" << std::endl;
         }
     }

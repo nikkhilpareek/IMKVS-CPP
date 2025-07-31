@@ -5,12 +5,13 @@
 #include <unordered_map>
 #include <optional>
 #include <chrono>
+#include <variant>
 
 #include "json.hpp"
 using json = nlohmann::json;
 
 struct ValueWithTTL {
-    std::string value;
+    std::variant<std::string, long long> data;
     long long expiration_time_ms;
 
     bool is_expired() const {
@@ -41,6 +42,9 @@ public:
     size_t count() const;
     bool save(const std::string& filename) const;
     bool load(const std::string& filename);
+
+    std::optional<long long> incr(const std::string& key);
+    std::optional<long long> decr(const std::string& key);
 
     void begin();
     void commit();
