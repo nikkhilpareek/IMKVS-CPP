@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <optional>
 #include <chrono>
+#include <mutex>
 #include <variant>
 
 #include "json.hpp"
@@ -30,6 +31,7 @@ void from_json(const json& j, ValueWithTTL& v);
 
 class KeyValueStore {
 private:
+    mutable std::mutex mtx;
     std::unordered_map<std::string, ValueWithTTL> data;
 
     bool in_trxn = false;

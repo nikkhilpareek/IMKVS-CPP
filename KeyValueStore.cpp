@@ -38,6 +38,7 @@ long long getCurrentTimeMillis() {
 }
 
 void KeyValueStore::set(const std::string& key, const std::string& value, long long ttl_ms) {
+    std::lock_guard<std::mutex> lock(mtx);
     long long expiration_time = -1;
     if (ttl_ms > 0) {
         expiration_time = getCurrentTimeMillis() + ttl_ms;
@@ -51,6 +52,7 @@ void KeyValueStore::set(const std::string& key, const std::string& value, long l
 }
 
 std::optional<std::string> KeyValueStore::get(const std::string& key) {
+    std::lock_guard<std::mutex> lock(mtx);
     if (in_trxn) {
         auto it = trxn_data.find(key);
         if (it != trxn_data.end()) {
@@ -118,6 +120,7 @@ std::optional<long long> perform_op(std::optional<ValueWithTTL>& entry, const st
 
 
 std::optional<long long> KeyValueStore::incr(const std::string& key) {
+    std::lock_guard<std::mutex> lock(mtx);
     if (in_trxn) {
         std::optional<ValueWithTTL> current_val = std::nullopt;
         
@@ -145,6 +148,7 @@ std::optional<long long> KeyValueStore::incr(const std::string& key) {
 }
 
 std::optional<long long> KeyValueStore::decr(const std::string& key) {
+    std::lock_guard<std::mutex> lock(mtx);
     if (in_trxn) {
         std::optional<ValueWithTTL> current_val = std::nullopt;
         if (trxn_data.count(key)) {
@@ -171,6 +175,7 @@ std::optional<long long> KeyValueStore::decr(const std::string& key) {
 }
 
 bool KeyValueStore::save(const std::string& filename) const {
+    std::lock_guard<std::mutex> lock(mtx);
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "ERROR: Could not open file for writing: " << filename << std::endl;
@@ -205,10 +210,9 @@ bool KeyValueStore::save(const std::string& filename) const {
     file.close();
     return true;
 }
-// ++ END: MODIFIED SAVE FUNCTION ++
 
-// ++ START: MODIFIED LOAD FUNCTION FOR PER-ENTRY HASHING ++
 bool KeyValueStore::load(const std::string& filename) {
+    std::lock_guard<std::mutex> lock(mtx);
     std::ifstream file(filename);
     if (!file.is_open() || file.peek() == std::ifstream::traits_type::eof()) {
         return true;
@@ -258,6 +262,7 @@ bool KeyValueStore::load(const std::string& filename) {
 }
 
 void KeyValueStore::begin(){
+    std::lock_guard<std::mutex> lock(mtx); 
     if (in_trxn) {
         std::cout << "ERROR: Transaction already in progress." << std::endl;
         return;
@@ -268,6 +273,7 @@ void KeyValueStore::begin(){
 }
 
 void KeyValueStore::commit() {
+    std::lock_guard<std::mutex> lock(mtx); 
     if (!in_trxn) {
         std::cout << "ERROR: No transaction to commit." << std::endl;
         return;
@@ -285,6 +291,7 @@ void KeyValueStore::commit() {
 }
 
 void KeyValueStore::rollback() {
+    std::lock_guard<std::mutex> lock(mtx); 
     if (!in_trxn) {
         std::cout << "ERROR: No transaction to rollback." << std::endl;
         return;
@@ -295,6 +302,7 @@ void KeyValueStore::rollback() {
 }
 
 bool KeyValueStore::remove(const std::string& key) {
+    std::lock_guard<std::mutex> lock(mtx);
     if (in_trxn) {
         trxn_data[key] = std::nullopt;
         return true;
@@ -304,5 +312,6 @@ bool KeyValueStore::remove(const std::string& key) {
 }
 
 size_t KeyValueStore::count() const {
+    std::lock_guard<std::mutex> lock(mtx);
     return data.size();
 }
