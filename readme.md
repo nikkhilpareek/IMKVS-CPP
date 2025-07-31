@@ -104,7 +104,6 @@ The following commands are available in the CLI:
 - REST API: Expose the key-value store over HTTP, allowing other applications to interact with it via a web API.
 
 #### Robustness & Performance
-- Advanced Error Handling: Make the JSON loading more robust to handle corrupted or malformed data files without crashing.
 
 - Thread Safety: Add mutexes to the data structures to allow for safe concurrent access from multiple threads.
 
