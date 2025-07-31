@@ -12,10 +12,10 @@ void to_json(json& j, const ValueWithTTL& v) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::string>) {
             j["type"] = "string";
-            j["value"] = arg;
+            j["data"] = arg; // <-- FIX: Changed "value" to "data"
         } else if constexpr (std::is_same_v<T, long long>) {
             j["type"] = "integer";
-            j["value"] = arg;
+            j["data"] = arg; // <-- FIX: Changed "value" to "data"
         }
     }, v.data);
 }
@@ -24,9 +24,9 @@ void from_json(const json& j, ValueWithTTL& v) {
     j.at("expiration_time_ms").get_to(v.expiration_time_ms);
     std::string type = j.at("type").get<std::string>();
     if (type == "string") {
-        v.data = j.at("value").get<std::string>();
+        v.data = j.at("data").get<std::string>(); // <-- FIX: Changed "value" to "data"
     } else if (type == "integer") {
-        v.data = j.at("value").get<long long>();
+        v.data = j.at("data").get<long long>(); // <-- FIX: Changed "value" to "data"
     }
 }
 
@@ -189,17 +189,41 @@ bool KeyValueStore::save(const std::string& filename) const {
 
 bool KeyValueStore::load(const std::string& filename) {
     std::ifstream file(filename);
-    if (!file.is_open()) {
+    if (!file.is_open() || file.peek() == std::ifstream::traits_type::eof()) {
+        return true; // File doesn't exist or is empty, which is fine.
+    }
+
+    json j;
+    try {
+        file >> j; // Parse the entire file into a JSON object first.
+    } catch (const json::parse_error& e) {
+        // This is a major syntax error. The file is unreadable.
+        std::cerr << "[ERROR] Failed to parse " << filename << ". It is not valid JSON." << std::endl;
+        std::cerr << "        Details: " << e.what() << std::endl;
+        std::cerr << "        Starting with an empty database." << std::endl;
+        data.clear();
         return true;
     }
-    try {
-        json j;
-        file >> j;
-        data = j.get<std::unordered_map<std::string, ValueWithTTL>>();
-    } catch (const json::parse_error& e) {
-        std::cerr << "ERROR: Failed to parse JSON file: " << e.what() << std::endl;
-        return false;
+
+    // Now, iterate and load each entry individually.
+    int corrupted_entries = 0;
+    for (auto& element : j.items()) {
+        const std::string& key = element.key();
+        try {
+            // Try to deserialize this specific entry.
+            ValueWithTTL value = element.value().get<ValueWithTTL>();
+            data[key] = value;
+        } catch (const json::exception& e) {
+            // This specific entry is malformed, but others might be okay.
+            std::cerr << "[WARNING] Skipping corrupted data for key '" << key << "'. Details: " << e.what() << std::endl;
+            corrupted_entries++;
+        }
     }
+
+    if (corrupted_entries > 0) {
+        std::cerr << "[INFO] Successfully loaded " << data.size() << " entries, skipped " << corrupted_entries << " corrupted entries." << std::endl;
+    }
+    
     file.close();
     return true;
 }
