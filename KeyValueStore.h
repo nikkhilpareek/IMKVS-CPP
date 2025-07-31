@@ -31,7 +31,7 @@ void from_json(const json& j, ValueWithTTL& v);
 
 class KeyValueStore {
 private:
-    mutable std::mutex mtx;
+    mutable std::recursive_mutex mtx;
     std::unordered_map<std::string, ValueWithTTL> data;
 
     bool in_trxn = false;
