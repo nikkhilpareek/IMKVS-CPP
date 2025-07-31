@@ -9,8 +9,6 @@ int main() {
     std::string line;
     const std::string FILENAME = "data.json";
 
-    // IMPORTANT: Delete the old data.json file before the first run!
-    // rm data.json
     kvs.load(FILENAME);
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
@@ -101,7 +99,7 @@ int main() {
                 std::cout << "ERROR: Incorrect usage. Try REMOVE key" << std::endl;
             }
         }
-        // ++ START: ADD THIS NEW SECTION ++
+
         else if (command == "INCR") {
             std::string key;
             if (ss >> key) {
@@ -126,7 +124,7 @@ int main() {
                 std::cout << "ERROR: Incorrect usage. Try DECR key" << std::endl;
             }
         }
-        // ++ END: ADD THIS NEW SECTION ++
+
         else if (!command.empty()) {
             std::cout << "ERROR: Unknown command '" << command << "'" << std::endl;
         }

@@ -6,7 +6,6 @@
 
 using json = nlohmann::json;
 
-// Helper to convert our variant to a JSON object with a "type" field
 void to_json(json& j, const ValueWithTTL& v) {
     j = { {"expiration_time_ms", v.expiration_time_ms} };
     std::visit([&j](auto&& arg) {
@@ -21,7 +20,6 @@ void to_json(json& j, const ValueWithTTL& v) {
     }, v.data);
 }
 
-// Helper to convert a JSON object back to our variant
 void from_json(const json& j, ValueWithTTL& v) {
     j.at("expiration_time_ms").get_to(v.expiration_time_ms);
     std::string type = j.at("type").get<std::string>();
@@ -84,7 +82,7 @@ std::optional<std::string> KeyValueStore::get(const std::string& key) {
     return std::nullopt;
 }
 
-// The function that performs the core increment/decrement logic
+
 std::optional<long long> perform_op(std::optional<ValueWithTTL>& entry, const std::string& op) {
     if (!entry.has_value() || entry->is_expired()) {
         long long start_val = (op == "INCR") ? 1LL : -1LL;
@@ -103,7 +101,7 @@ std::optional<long long> perform_op(std::optional<ValueWithTTL>& entry, const st
             try {
                 long long val = std::stoll(arg);
                 new_value = (op == "INCR") ? ++val : --val;
-                entry->data = new_value; // Promote to integer
+                entry->data = new_value; 
                 success = true;
             } catch (...) {
                 success = false;
@@ -117,11 +115,11 @@ std::optional<long long> perform_op(std::optional<ValueWithTTL>& entry, const st
     return std::nullopt;
 }
 
-// INCR is now transactional
+
 std::optional<long long> KeyValueStore::incr(const std::string& key) {
     if (in_trxn) {
         std::optional<ValueWithTTL> current_val = std::nullopt;
-        // Check transaction data first, then main data
+        
         if (trxn_data.count(key)) {
             current_val = trxn_data.at(key);
         } else if (data.count(key)) {
@@ -129,24 +127,22 @@ std::optional<long long> KeyValueStore::incr(const std::string& key) {
         }
         auto result = perform_op(current_val, "INCR");
         if (result.has_value()) {
-            trxn_data[key] = current_val; // Write back to transaction
+            trxn_data[key] = current_val; 
         }
         return result;
     }
     
-    // Non-transactional logic
     std::optional<ValueWithTTL> entry = std::nullopt;
     if (data.count(key)) {
         entry = data.at(key);
     }
     auto result = perform_op(entry, "INCR");
     if (result.has_value()) {
-        data[key] = entry.value(); // Write back to main data
+        data[key] = entry.value(); 
     }
     return result;
 }
 
-// DECR is now transactional
 std::optional<long long> KeyValueStore::decr(const std::string& key) {
     if (in_trxn) {
         std::optional<ValueWithTTL> current_val = std::nullopt;
@@ -172,9 +168,6 @@ std::optional<long long> KeyValueStore::decr(const std::string& key) {
     }
     return result;
 }
-
-
-// --- Unchanged methods below ---
 
 bool KeyValueStore::save(const std::string& filename) const {
     std::ofstream file(filename);
