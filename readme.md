@@ -93,9 +93,6 @@ The following commands are available in the CLI:
 #### To be Added in Future
 
 ##### Core Feature Enhancements
-- Key Expiration (TTL): Allow keys to have a "time-to-live" so they automatically delete after a set duration.
-
-- More Data Types: Add support for integers to enable atomic commands like INCR and DECR.
 
 - Namespaces: Allow for multiple, isolated databases within a single running instance, accessible via a SELECT command.
 
