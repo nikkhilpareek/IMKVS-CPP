@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <chrono>
+#include "picosha2.h"
 
 using json = nlohmann::json;
 
@@ -12,10 +13,10 @@ void to_json(json& j, const ValueWithTTL& v) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::string>) {
             j["type"] = "string";
-            j["data"] = arg; // <-- FIX: Changed "value" to "data"
+            j["data"] = arg; 
         } else if constexpr (std::is_same_v<T, long long>) {
             j["type"] = "integer";
-            j["data"] = arg; // <-- FIX: Changed "value" to "data"
+            j["data"] = arg; 
         }
     }, v.data);
 }
@@ -24,9 +25,9 @@ void from_json(const json& j, ValueWithTTL& v) {
     j.at("expiration_time_ms").get_to(v.expiration_time_ms);
     std::string type = j.at("type").get<std::string>();
     if (type == "string") {
-        v.data = j.at("data").get<std::string>(); // <-- FIX: Changed "value" to "data"
+        v.data = j.at("data").get<std::string>(); 
     } else if (type == "integer") {
-        v.data = j.at("data").get<long long>(); // <-- FIX: Changed "value" to "data"
+        v.data = j.at("data").get<long long>(); 
     }
 }
 
@@ -175,53 +176,81 @@ bool KeyValueStore::save(const std::string& filename) const {
         std::cerr << "ERROR: Could not open file for writing: " << filename << std::endl;
         return false;
     }
-    std::unordered_map<std::string, ValueWithTTL> non_expired_data;
+
+    json final_json = json::object(); // Start with an empty JSON object
+
     for (const auto& pair : data) {
-        if (!pair.second.is_expired()) {
-            non_expired_data[pair.first] = pair.second;
+        if (pair.second.is_expired()) {
+            continue; // Don't save expired keys
         }
+
+        // Create a JSON object for the value part
+        json value_j = pair.second;
+        std::string value_str = value_j.dump();
+
+        // Hash the string representation of the value
+        std::string hash_hex_str;
+        picosha2::hash256_hex_string(value_str, hash_hex_str);
+
+        // Create the per-entry envelope
+        json entry_envelope;
+        entry_envelope["value"] = value_j;
+        entry_envelope["hash"] = hash_hex_str;
+
+        // Add it to our final JSON object
+        final_json[pair.first] = entry_envelope;
     }
-    json j = non_expired_data;
-    file << j.dump(4);
+
+    file << final_json.dump(4);
     file.close();
     return true;
 }
+// ++ END: MODIFIED SAVE FUNCTION ++
 
+// ++ START: MODIFIED LOAD FUNCTION FOR PER-ENTRY HASHING ++
 bool KeyValueStore::load(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open() || file.peek() == std::ifstream::traits_type::eof()) {
-        return true; // File doesn't exist or is empty, which is fine.
+        return true;
     }
 
-    json j;
+    json file_j;
     try {
-        file >> j; // Parse the entire file into a JSON object first.
+        file >> file_j;
     } catch (const json::parse_error& e) {
-        // This is a major syntax error. The file is unreadable.
-        std::cerr << "[ERROR] Failed to parse " << filename << ". It is not valid JSON." << std::endl;
-        std::cerr << "        Details: " << e.what() << std::endl;
-        std::cerr << "        Starting with an empty database." << std::endl;
+        std::cerr << "[ERROR] Failed to parse " << filename << ". It is not valid JSON. Starting fresh." << std::endl;
         data.clear();
         return true;
     }
 
-    // Now, iterate and load each entry individually.
-    int corrupted_entries = 0;
-    for (auto& element : j.items()) {
+    for (auto& element : file_j.items()) {
         const std::string& key = element.key();
-        try {
-            // Try to deserialize this specific entry.
-            ValueWithTTL value = element.value().get<ValueWithTTL>();
-            data[key] = value;
-        } catch (const json::exception& e) {
-            // This specific entry is malformed, but others might be okay.
-            std::cerr << "[WARNING] Skipping corrupted data for key '" << key << "'. Details: " << e.what() << std::endl;
-            corrupted_entries++;
-        }
-    }
+        const json& entry_envelope = element.value();
 
-    if (corrupted_entries > 0) {
-        std::cerr << "[INFO] Successfully loaded " << data.size() << " entries, skipped " << corrupted_entries << " corrupted entries." << std::endl;
+        if (!entry_envelope.is_object() || !entry_envelope.contains("value") || !entry_envelope.contains("hash")) {
+            std::cerr << "[WARNING] Skipping malformed entry for key '" << key << "'. Missing 'value' or 'hash' field." << std::endl;
+            continue;
+        }
+        
+        json value_j = entry_envelope["value"];
+        std::string stored_hash = entry_envelope["hash"];
+        
+        // Recalculate hash to verify integrity
+        std::string value_str = value_j.dump();
+        std::string calculated_hash;
+        picosha2::hash256_hex_string(value_str, calculated_hash);
+        
+        if (stored_hash != calculated_hash) {
+            std::cerr << "[CRITICAL] TAMPERING DETECTED for key '" << key << "'. This entry will not be loaded." << std::endl;
+            continue; // Skip this entry and move to the next
+        }
+
+        // If the hash is valid, deserialize the value
+        try {
+            data[key] = value_j.get<ValueWithTTL>();
+        } catch (const json::exception& e) {
+            std::cerr << "[WARNING] Skipping corrupted data for key '" << key << "'. Details: " << e.what() << std::endl;
+        }
     }
     
     file.close();
