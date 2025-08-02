@@ -1,0 +1,34 @@
+name: C++ CI
+
+# This workflow will run on every push and pull request to the main branch
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    # Run the job on the latest version of Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Check out the repository's code so the workflow can access it
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Install necessary build tools (g++, cmake, etc.)
+    - name: Install Build Dependencies
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+
+    # 3. Configure CMake
+    - name: Configure CMake
+      run: cmake -B build -S .
+
+    # 4. Build the project
+    - name: Build Project
+      run: cmake --build build
+
+    # 5. Run the unit tests
+    - name: Run Tests
+      run: ./build/kv_tests

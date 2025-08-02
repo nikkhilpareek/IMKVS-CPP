@@ -1,12 +1,18 @@
 # Ignore everything
 *
+!*/
 
-# But not these files
+# Ignore .vscode folders everywhere
+.vscode/
+
+# But not these files in root and subdirectories
 !*.cpp
-!*.gitignore
+!.gitignore
 !*.md
 !*.csv
 !*.h
 !*.hpp
 !*.json
 !*.txt
+!*.yml
+!**/*.yml
