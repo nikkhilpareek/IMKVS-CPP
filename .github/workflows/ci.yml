@@ -1,6 +1,5 @@
-name: C++ CI
+name: C++ CI and Benchmark
 
-# This workflow will run on every push and pull request to the main branch
 on:
   push:
     branches: [ "main", "master" ]
@@ -8,27 +7,42 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build:
-    # Run the job on the latest version of Ubuntu
+  build_and_test:
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Check out the repository's code so the workflow can access it
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # 2. Install necessary build tools (g++, cmake, etc.)
     - name: Install Build Dependencies
       run: sudo apt-get update && sudo apt-get install -y build-essential cmake
 
-    # 3. Configure CMake
-    - name: Configure CMake
-      run: cmake -B build -S .
+    - name: Configure CMake (Debug)
+      run: cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -S .
 
-    # 4. Build the project
-    - name: Build Project
-      run: cmake --build build
+    - name: Build Project (Debug)
+      run: cmake --build build-debug
 
-    # 5. Run the unit tests
-    - name: Run Tests
-      run: ./build/kv_tests
+    - name: Run Unit Tests
+      run: ./build-debug/kv_tests
+
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Install Build Dependencies
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+
+    - name: Configure CMake (Release)
+      run: cmake -B build-release -DCMAKE_BUILD_TYPE=Release -S .
+
+    - name: Build Project (Release)
+      run: cmake --build build-release
+
+    - name: Run Benchmarks
+      run: ./build-release/kv_benchmarks
