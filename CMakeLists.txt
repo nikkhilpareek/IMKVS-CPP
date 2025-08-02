@@ -71,3 +71,22 @@ target_link_libraries(
 include(GoogleTest)
 # Discover and add the tests from our kv_tests executable
 gtest_discover_tests(kv_tests)
+
+FetchContent_Declare(
+    googlebenchmark
+    URL https://github.com/google/benchmark/archive/v1.8.3.zip
+)
+
+FetchContent_MakeAvailable(googlebenchmark)
+
+add_executable(
+    kv_benchmarks
+    benchmarks.cpp
+)
+
+target_link_libraries(
+    kv_benchmarks
+    PRIVATE
+    kv_store
+    benchmark::benchmark_main
+)
