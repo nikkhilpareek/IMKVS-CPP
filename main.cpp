@@ -4,6 +4,25 @@
 #include <stdexcept>
 #include "KeyValueStore.h"
 
+void print_help() {
+    std::cout << "IMKVS Help:\n"
+              << "--------------------------------------------------------------------------\n"
+              << "  SET key value [ttl_ms]  - Sets a key to a value with an optional TTL.\n"
+              << "  GET key                 - Retrieves the value for a given key.\n"
+              << "  REMOVE key              - Deletes a key-value pair.\n"
+              << "  INCR key                - Atomically increments an integer key.\n"
+              << "  DECR key                - Atomically decrements an integer key.\n"
+              << "  COUNT                   - Returns the total number of keys.\n"
+              << "--------------------------------------------------------------------------\n"
+              << "  BEGIN                   - Starts a new transaction.\n"
+              << "  COMMIT                  - Saves all changes in the current transaction.\n"
+              << "  ROLLBACK                - Discards all changes in the current transaction.\n"
+              << "--------------------------------------------------------------------------\n"
+              << "  HELP                    - Shows this help message.\n"
+              << "  EXIT                    - Saves the database and closes the CLI.\n"
+              << "--------------------------------------------------------------------------\n";
+}
+
 int main() {
     KeyValueStore kvs;
     std::string line;
@@ -12,6 +31,7 @@ int main() {
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
     std::cout << "Enter commands (e.g., SET, GET, INCR, DECR, EXIT)" << std::endl;
+    std::cout << "Enter 'HELP' for a list of commands." << std::endl;
     
     while(true){
         std::cout << "> ";
@@ -25,6 +45,9 @@ int main() {
             kvs.save(FILENAME);
             std::cout << "Data saved to data.json" << std::endl;
             break;
+        }
+        else if (command == "HELP") {
+            print_help();
         }
         else if (command == "BEGIN") {
             kvs.begin();
