@@ -7,8 +7,7 @@
 int main() {
     KeyValueStore kvs;
     std::string line;
-    const std::string FILENAME = "data.json";
-
+    const std::string FILENAME = std::string(PROJECT_SOURCE_DIR) + "/data.json";
     kvs.load(FILENAME);
 
     std::cout << "Nikhil's In-Memory Key-Value Store Project" << std::endl;
