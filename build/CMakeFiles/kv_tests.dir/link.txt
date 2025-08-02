@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/kv_tests.dir/tests.cpp.o -o kv_tests  libkv_store.a lib/libgtest_main.a lib/libgtest.a
