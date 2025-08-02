@@ -65,11 +65,17 @@ To start the interactive CLI, run the `imkvs` executable from the build director
 ```
 
 ---
-### Running the Tests
+### Running Tests & Benchmarking
 
 To run the automated unit tests, execute the kv_tests executable from the build directory:
 ```bash
 ./kv_tests
+```
+
+To measure the performance of operations, run the kv_benchmarks executable. For accurate results, ensure you have compiled in Release mode.
+
+```bash
+./kv_benchmarks
 ```
 
 ---
@@ -89,6 +95,7 @@ The following commands are available in the CLI:
 | `BEGIN`                   | Starts a new transaction.                                                   | `BEGIN`                  |
 | `COMMIT`                  | Saves all changes made during the current transaction.                      | `COMMIT`                 |
 | `ROLLBACK`                | Discards all changes made during the current transaction.                   | `ROLLBACK`               |
+| `HELP`                    | Displays a list of all available commands.                  | `HELP`                   |
 | `EXIT`                    | Saves the current state to `data.json` and closes the CLI.                  | `EXIT`                   |
 
 ---
@@ -104,6 +111,7 @@ The following commands are available in the CLI:
 ├── KeyValueStore.h          # Class interface for the key-value store
 ├── main.cpp                 # Contains the main application loop and CLI logic
 ├── tests.cpp                # Unit tests using the Google Test framework
+├── benchmarks.cpp           # Performance tests using the Google Benchmark framework
 └── readme.md                # Project documentation
 ```
 
@@ -128,5 +136,3 @@ The following commands are available in the CLI:
 2. Namespaces: Allow for multiple, isolated databases within a single running instance.
 
 3. Encryption: Encrypt the data.json file to protect data confidentiality.
-
-4. Performance Benchmarking: Create a test suite to measure the performance of operations.
